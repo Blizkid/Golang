@@ -1,0 +1,59 @@
+
+import (
+	"fmt"
+)
+
+func run() {
+	// 测试形状接口
+	rect := Rectangle{Width: 5, Height: 10}
+	circ := Circle{Radius: 7}
+
+	fmt.Printf("矩形面积: %.2f, 周长: %.2f\n", rect.Area(), rect.Perimeter())
+	fmt.Printf("圆形面积: %.2f, 周长: %.2f\n", circ.Area(), circ.Perimeter())
+
+	employee1 := Employee{Name: "Alice", Age: 30}
+	person1 := Person{Employee: employee1, EmployeeID: 12345}
+	fmt.Println(person1.PrintInfo())
+}
+
+type Shape interface {
+	Area() float64
+	Perimeter() float64
+}
+
+type Rectangle struct {
+	Width, Height float64
+}
+
+type Circle struct {
+	Radius float64
+}
+
+func (r Rectangle) Area() float64 {
+	return r.Width * r.Height
+}
+
+func (r Rectangle) Perimeter() float64 {
+	return 2 * (r.Width + r.Height)
+}
+func (c Circle) Area() float64 {
+	return 3.14 * c.Radius * c.Radius
+}
+
+func (c Circle) Perimeter() float64 {
+	return 2 * 3.14 * c.Radius
+}
+
+type Employee struct {
+	Name string
+	Age  int
+}
+
+type Person struct {
+	Employee
+	EmployeeID int
+}
+
+func (p Person) PrintInfo() string {
+	return fmt.Sprintf("Name: %s, Age: %d, EmployeeID: %d", p.Name, p.Age, p.EmployeeID)
+}

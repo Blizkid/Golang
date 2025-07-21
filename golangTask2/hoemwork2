@@ -1,0 +1,68 @@
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func run() {
+	//Goroutine
+	go printOdd()
+	go printEven()
+	time.Sleep(2 * time.Second) // 等待协程完成
+	fmt.Println("Main function completed.")
+
+	// 任务调度器
+	task1 := func() {
+		time.Sleep(300 * time.Millisecond)
+		fmt.Println("任务1完成")
+	}
+	task2 := func() {
+		time.Sleep(500 * time.Millisecond)
+		fmt.Println("任务2完成")
+	}
+	task3 := func() {
+		time.Sleep(200 * time.Millisecond)
+		fmt.Println("任务3完成")
+	}
+	tasks := []Task{task1, task2, task3}
+	scheduler(tasks)
+	fmt.Println("所有任务已完成")
+}
+
+func printEven() {
+	for i := 0; i <= 10; i++ {
+		time.Sleep(100 * time.Millisecond)
+		if i%2 == 0 {
+			fmt.Println("偶数", i)
+		}
+	}
+}
+
+func printOdd() {
+	for i := 0; i <= 10; i++ {
+		time.Sleep(100 * time.Millisecond)
+		if i%2 == 1 {
+			fmt.Println("奇数", i)
+		}
+	}
+}
+
+type Task func()
+
+func scheduler(tasks []Task) {
+	done := make(chan struct{})
+	for i, task := range tasks {
+		go func(idx int, t Task) {
+			start := time.Now()
+			t()
+			duration := time.Since(start)
+			fmt.Printf("任务%d执行时间: %v\n", idx+1, duration)
+			done <- struct{}{} // 空结构体，只作为一个信号
+		}(i, task)
+	}
+	// 等待所有任务完成
+	for range tasks {
+		<-done // 阻塞，直到接收到所有任务的完成信号
+	}
+}
