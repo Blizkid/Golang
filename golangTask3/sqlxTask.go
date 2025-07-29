@@ -1,4 +1,4 @@
-package main
+package golangTask3
 
 import (
 	"fmt"

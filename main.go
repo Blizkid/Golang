@@ -1,46 +1,38 @@
 package main
 
 import (
-	"fmt"
-	"sync"
-	"sync/atomic"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
-func main() {
-	var counter int
-	var mu sync.Mutex     // 可以保证同一时刻只有一个协程能修改
-	var wg sync.WaitGroup //保证主协程等待所有子协程完成
-
-	wg.Add(10)
-	for i := 0; i < 10; i++ {
-		go func() {
-			for j := 0; j < 1000; j++ {
-				mu.Lock()
-				counter++
-				mu.Unlock()
-			}
-			wg.Done()
-		}()
-	}
-	wg.Wait()
-	fmt.Println("最终计数器的值：", counter)
-
-	var c Counter
-	for i := 0; i < 10; i++ {
-		go func() {
-			for j := 0; j < 1000; j++ {
-				c.Inc()
-			}
-			wg.Done()
-		}()
-	}
-	wg.Wait()
-	fmt.Println("最终计数器的值：", c.Get())
-
+type Product struct {
+	//gorm.Model
+	Code  string
+	Price uint
 }
 
-type Counter struct{ counter int64 }
+func main() {
+	// 参考 https://github.com/go-sql-driver/mysql#dsn-data-source-name 获取详情
+	dsn := "root:123456@tcp(127.0.0.1:3306)/mydatabase?charset=utf8mb4&parseTime=True&loc=Local"
+	db, _ := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 
-func (c *Counter) Inc() { atomic.AddInt64(&c.counter, 1) }
+	// 迁移 schema
+	db.AutoMigrate(&Product{})
 
-func (c *Counter) Get() int64 { return atomic.LoadInt64(&c.counter) }
+	// Create
+	db.Create(&Product{Code: "D42", Price: 100})
+
+	// Read
+	var product Product
+	db.First(&product, 1)                 // 根据整型主键查找
+	db.First(&product, "code = ?", "D42") // 查找 code 字段值为 D42 的记录
+
+	// Update - 将 product 的 price 更新为 200
+	db.Model(&product).Update("Price", 200)
+	// Update - 更新多个字段
+	db.Model(&product).Updates(Product{Price: 200, Code: "F42"}) // 仅更新非零值字段
+	db.Model(&product).Updates(map[string]interface{}{"Price": 200, "Code": "F42"})
+
+	// Delete - 删除 product
+	db.Delete(&product, 1)
+}
